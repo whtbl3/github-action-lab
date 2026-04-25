@@ -44,5 +44,5 @@ jobs:
         run: |
           echo "Connecting to database..."
           # Dùng biến trong lệnh thực tế, ví dụ:
-          psql -h $DB_HOST -U $DB_USER -W $DB_PASSWORD
+          echo "psql -h $DB_HOST -U $DB_USER -W $DB_PASSWORD"
 
