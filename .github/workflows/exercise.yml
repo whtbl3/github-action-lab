@@ -1,16 +1,17 @@
-name: System Pipeline & Development (Trunk-based)
+name: TBD Pipeline
 
-run-name: Pipeline
+run-name: Pipeline #${{ github.run_number }}
 
 on:
   push: 
-    branches: ["main"] # Chỉ tập trung vào một nhánh duy nhất
+    branches: ["main"] # Chỉ chạy duy nhất trên nhánh main
 
 env:
   APP_NAME: "MyPublicApp"
   DEBUG_MODE: "true"
 
 jobs:
+  # Job kiểm tra hệ thống (Thay cho security-check/system-check cũ)
   system-check:
     runs-on: ubuntu-latest
     steps:
@@ -23,25 +24,18 @@ jobs:
         if: env.DEBUG_MODE == 'true'
         run: echo "Token loaded for security scan..."
 
-  deploy-dev:
-    needs: system-check # Chạy sau khi check xong
-    runs-on: ubuntu-latest
-    environment: dev    # Tự động chạy vì dev không có Protection Rule
-    steps:
-      - name: Deploy to dev
-        env:
-          DB_PASSWORD: ${{ secrets.DEPLOY_TOKEN }}
-        run: |
-          echo "Deploying ${{ env.APP_NAME }} v${{ vars.APP_VERSION }} to ${{ vars.DEPLOY_URL }}"
-
+  # Job Deploy thẳng lên PROD (có Reviewer và Wait timer bạn đã cấu hình trên Web)
   deploy-prod:
-    needs: deploy-dev   # QUAN TRỌNG: Chỉ chạy sau khi Deploy Dev thành công
+    needs: system-check # Phải qua bước check mới đến bước này
     runs-on: ubuntu-latest
-    environment: prod   # Ở đây GitHub sẽ dừng lại chờ bạn Approve + Đợi 1 phút
+    environment: prod   # Tên môi trường phải khớp chính xác với Settings trên Web
     steps:
       - name: Deploy to Production
         env:
+          # Lấy secret từ môi trường prod
           DB_PASSWORD: ${{ secrets.DEPLOY_TOKEN }}
         run: |
-          echo "🚀 PROD DEPLOY: ${{ env.APP_NAME }} v${{ vars.APP_VERSION }}"
-          echo "🌍 URL: ${{ vars.DEPLOY_URL }}"
+          echo "🚀 ĐANG TRIỂN KHAI BẢN CHÍNH THỨC: ${{ env.APP_NAME }}"
+          echo "📦 Phiên bản: ${{ vars.APP_VERSION }}"
+          echo "🌍 Địa chỉ URL: ${{ vars.DEPLOY_URL }}"
+          echo "Kết nối DB thành công!"
