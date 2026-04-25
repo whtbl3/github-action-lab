@@ -1,8 +1,10 @@
-name: System Pipeline & Development
+name: System Pipeline & Development (Trunk-based)
+
+run-name: Pipeline
 
 on:
   push: 
-    branches: ["main", "dev"]
+    branches: ["main"] # Chỉ tập trung vào một nhánh duy nhất
 
 env:
   APP_NAME: "MyPublicApp"
@@ -22,23 +24,20 @@ jobs:
         run: echo "Token loaded for security scan..."
 
   deploy-dev:
-    needs: system-check 
-    if: github.ref == 'refs/heads/dev'
+    needs: system-check # Chạy sau khi check xong
     runs-on: ubuntu-latest
-    environment: dev
+    environment: dev    # Tự động chạy vì dev không có Protection Rule
     steps:
       - name: Deploy to dev
         env:
           DB_PASSWORD: ${{ secrets.DEPLOY_TOKEN }}
         run: |
           echo "Deploying ${{ env.APP_NAME }} v${{ vars.APP_VERSION }} to ${{ vars.DEPLOY_URL }}"
-          echo "Connecting to DB with password: $DB_PASSWORD"
-  
+
   deploy-prod:
-    needs: system-check
-    if: github.ref == 'refs/heads/main'
+    needs: deploy-dev   # QUAN TRỌNG: Chỉ chạy sau khi Deploy Dev thành công
     runs-on: ubuntu-latest
-    environment: prod
+    environment: prod   # Ở đây GitHub sẽ dừng lại chờ bạn Approve + Đợi 1 phút
     steps:
       - name: Deploy to Production
         env:
