@@ -1,41 +1,24 @@
 name: TBD Pipeline
 
-run-name: Pipeline #${{ github.run_number }}
-
 on:
-  push: 
-    branches: ["main"] # Chỉ chạy duy nhất trên nhánh main
-
-env:
-  APP_NAME: "MyPublicApp"
-  DEBUG_MODE: "true"
+  push:
+    branches: ["main"]
+  pull_request: # THÊM DÒNG NÀY ĐỂ CHẠY TEST KHI MỞ PR
+    branches: ["main"]
 
 jobs:
-  # Job kiểm tra hệ thống (Thay cho security-check/system-check cũ)
   system-check:
     runs-on: ubuntu-latest
     steps:
       - name: Report Info
-        run: |
-          echo "Repo: $GITHUB_REPOSITORY | User: $GITHUB_ACTOR"
-          echo "OS: $RUNNER_OS"
-      
-      - name: Security Scan
-        if: env.DEBUG_MODE == 'true'
-        run: echo "Token loaded for security scan..."
+        run: echo "Kiểm tra code trước khi merge..."
 
-  # Job Deploy thẳng lên PROD (có Reviewer và Wait timer bạn đã cấu hình trên Web)
   deploy-prod:
-    needs: system-check # Phải qua bước check mới đến bước này
+    # Chỉ deploy khi code đã thực sự vào main (sự kiện push)
+    if: github.event_name == 'push' 
+    needs: system-check
     runs-on: ubuntu-latest
-    environment: prod   # Tên môi trường phải khớp chính xác với Settings trên Web
+    environment: prod
     steps:
       - name: Deploy to Production
-        env:
-          # Lấy secret từ môi trường prod
-          DB_PASSWORD: ${{ secrets.DEPLOY_TOKEN }}
-        run: |
-          echo "🚀 ĐANG TRIỂN KHAI BẢN CHÍNH THỨC: ${{ env.APP_NAME }}"
-          echo "📦 Phiên bản: ${{ vars.APP_VERSION }}"
-          echo "🌍 Địa chỉ URL: ${{ vars.DEPLOY_URL }}"
-          echo "Kết nối DB thành công!"
+        run: echo "🚀 Deploying to Prod..."
