@@ -32,3 +32,17 @@ jobs:
         env:
           MY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "Token has been loaded for security scan"
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect to Database
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOSTS: 'HOST_TEST'
+          DB_USER: 'USER_TEST'
+        run: |
+          echo "Connecting to database..."
+          # Dùng biến trong lệnh thực tế, ví dụ:
+          psql -h $DB_HOST -U $DB_USER -W $DB_PASSWORD
+
