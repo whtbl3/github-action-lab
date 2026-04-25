@@ -1,48 +1,47 @@
-name: System Health Check
+name: System Pipeline & Development (Trunk-based)
 
-on: push
+run-name: Pipeline
+
+on:
+  push: 
+    branches: ["main"] # Chỉ tập trung vào một nhánh duy nhất
 
 env:
-  APP_NAME: "MySecretApp"
+  APP_NAME: "MyPublicApp"
   DEBUG_MODE: "true"
 
 jobs:
-  system-discovery:
+  system-check:
     runs-on: ubuntu-latest
     steps:
-      - name: Report Repo Info
+      - name: Report Info
         run: |
-          echo "Repo: $GITHUB_REPOSITORY"
-          echo "User: $GITHUB_ACTOR"
-
-      - name: Check Runner OS
-        run: |
-          echo "Hệ điều hành là: $RUNNER_OS"
-
-      - name: Local Step Variable
-        env:
-          TEMP_ID: "9999"
-        run: echo "Processing ID $TEMP_ID for $APP_NAME"
-
-  security-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Load Security Token
+          echo "Repo: $GITHUB_REPOSITORY | User: $GITHUB_ACTOR"
+          echo "OS: $RUNNER_OS"
+      
+      - name: Security Scan
         if: env.DEBUG_MODE == 'true'
-        env:
-          MY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "Token has been loaded for security scan"
+        run: echo "Token loaded for security scan..."
 
-  deploy:
+  deploy-dev:
+    needs: system-check # Chạy sau khi check xong
     runs-on: ubuntu-latest
+    environment: dev    # Tự động chạy vì dev không có Protection Rule
     steps:
-      - name: Connect to Database
+      - name: Deploy to dev
         env:
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_HOSTS: 'HOST_TEST'
-          DB_USER: 'USER_TEST'
+          DB_PASSWORD: ${{ secrets.DEPLOY_TOKEN }}
         run: |
-          echo "Connecting to database..."
-          # Dùng biến trong lệnh thực tế, ví dụ:
-          echo "psql -h $DB_HOST -U $DB_USER -W $DB_PASSWORD"
+          echo "Deploying ${{ env.APP_NAME }} v${{ vars.APP_VERSION }} to ${{ vars.DEPLOY_URL }}"
 
+  deploy-prod:
+    needs: deploy-dev   # QUAN TRỌNG: Chỉ chạy sau khi Deploy Dev thành công
+    runs-on: ubuntu-latest
+    environment: prod   # Ở đây GitHub sẽ dừng lại chờ bạn Approve + Đợi 1 phút
+    steps:
+      - name: Deploy to Production
+        env:
+          DB_PASSWORD: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          echo "🚀 PROD DEPLOY: ${{ env.APP_NAME }} v${{ vars.APP_VERSION }}"
+          echo "🌍 URL: ${{ vars.DEPLOY_URL }}"
