@@ -1,0 +1,34 @@
+name: System Health Check
+
+on: push
+
+env:
+  APP_NAME: "MySecretApp"
+  DEBUG_MODE: "true"
+
+jobs:
+  system-discovery:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report Repo Info
+        run: |
+          echo "Repo: $GITHUB_REPOSITORY"
+          echo "User: $GITHUB_ACTOR"
+
+      - name: Check Runner OS
+        run: |
+          echo "Hệ điều hành là: $RUNNER_OS"
+
+      - name: Local Step Variable
+        env:
+          TEMP_ID: "9999"
+        run: echo "Processing ID $TEMP_ID for $APP_NAME"
+
+  security-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Load Security Token
+        if: env.DEBUG_MODE == 'true'
+        env:
+          MY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "Token has been loaded for security scan"
