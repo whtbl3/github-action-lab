@@ -4,7 +4,7 @@ on: push
 
 env:
   APP_NAME: "MySecretApp"
-  DEBUG_MODE: "false"
+  DEBUG_MODE: "true"
 
 jobs:
   system-discovery:
